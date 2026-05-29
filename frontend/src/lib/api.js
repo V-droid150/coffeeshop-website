@@ -1,9 +1,9 @@
 // ─── Base URL ──────────────────────────────────────────────────────────────────
-// Di development → Next.js rewrites /api/* ke Express localhost:5000
-// Di production VPS → ganti NEXT_PUBLIC_API_URL ke domain backend Anda
-const BASE = process.env.NEXT_PUBLIC_API_URL
-  ? `${process.env.NEXT_PUBLIC_API_URL}/api`
-  : '/api'
+// SSR (server): gunakan URL absolut langsung ke backend
+// Browser (client): gunakan URL absolut ke backend juga
+const BASE = typeof window === 'undefined'
+  ? `${process.env.API_URL || 'http://localhost:5000'}/api`          // SSR
+  : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api` // Browser
 
 // ─── Helper fetch ─────────────────────────────────────────────────────────────
 async function apiFetch(path, options = {}) {
