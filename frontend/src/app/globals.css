@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: #FAF7F2;
+    color: #2C1810;
+    font-family: 'Nunito', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Playfair Display', serif;
+  }
+
+  ::-webkit-scrollbar       { width: 6px; }
+  ::-webkit-scrollbar-track { background: #F5E6D3; }
+  ::-webkit-scrollbar-thumb { background: #C4956A; border-radius: 3px; }
+}
+
+@layer components {
+  /* Tombol utama — cokelat hangat */
+  .btn-primary {
+    @apply bg-coffee text-warm-white font-semibold px-6 py-3 rounded-2xl
+           shadow-warm hover:bg-espresso hover:shadow-warm-lg
+           transition-all duration-200 active:scale-95;
+  }
+
+  /* Tombol outline */
+  .btn-outline {
+    @apply border-2 border-coffee text-coffee font-semibold px-6 py-3 rounded-2xl
+           hover:bg-coffee hover:text-warm-white
+           transition-all duration-200 active:scale-95;
+  }
+
+  /* Kartu produk */
+  .card {
+    @apply bg-white rounded-2xl shadow-warm hover:shadow-warm-lg
+           transition-all duration-300 overflow-hidden;
+  }
+
+  /* Badge kategori */
+  .badge {
+    @apply text-xs font-semibold px-3 py-1 rounded-full;
+  }
+}
+
+/* Animasi fade-up untuk section entries */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fadeUp 0.6s ease-out forwards;
+}
