@@ -1,16 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Proxy /api/* ke Express backend saat development
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/:path*`,
-      },
-    ]
-  },
+  // Backend menyatu di dalam Next.js (route handler di src/app/api/*),
+  // jadi tidak perlu proxy/rewrite ke server eksternal.
   images: {
-    domains: ['images.unsplash.com', 'localhost'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+    ],
   },
 }
 

@@ -2,7 +2,7 @@
 // Data di-fetch langsung di server saat render (SSR).
 // Ketika user klik "Tambah", ProductCard (Client Component) mengambil alih.
 // ─────────────────────────────────────────────────────────────────────────────
-import { getProducts, getCategories } from '@/lib/api'
+import { products as ALL_PRODUCTS, categories } from '@/lib/menu-data'
 import ProductCard from '@/components/ProductCard'
 import MenuFilter from './MenuFilter'
 
@@ -11,22 +11,14 @@ export const metadata = {
   description: 'Jelajahi menu kopi spesialti, minuman non-kopi, dan pastry kami.',
 }
 
-export default async function MenuPage({ searchParams }) {
+export default function MenuPage({ searchParams }) {
   const activeCategory = searchParams?.category ?? 'semua'
 
-  // ── Fetch data dari Express backend secara paralel ────────────────────────
-  let products = []
-  let categories = []
-  try {
-    const [prodRes, catRes] = await Promise.all([
-      getProducts(activeCategory !== 'semua' ? { category: activeCategory } : {}),
-      getCategories(),
-    ])
-    products   = prodRes.data  ?? []
-    categories = catRes.data   ?? []
-  } catch (err) {
-    console.error('[MenuPage] Fetch error:', err.message)
-  }
+  // Data dibaca langsung dari modul (backend menyatu) — tanpa HTTP fetch ke
+  // diri sendiri, jadi andal di server maupun saat di-deploy.
+  const products = ALL_PRODUCTS.filter(p =>
+    p.is_available && (activeCategory === 'semua' || p.category_slug === activeCategory)
+  )
 
   return (
     <div className="pt-24 pb-20 min-h-screen bg-warm-white">

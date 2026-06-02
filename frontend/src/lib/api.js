@@ -1,9 +1,15 @@
 // ─── Base URL ──────────────────────────────────────────────────────────────────
-// SSR (server): gunakan URL absolut langsung ke backend
-// Browser (client): gunakan URL absolut ke backend juga
-const BASE = typeof window === 'undefined'
-  ? `${process.env.API_URL || 'http://localhost:5000'}/api`          // SSR
-  : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api` // Browser
+// Backend menyatu di dalam Next.js (route handler /api/*), jadi:
+//  • Browser  : panggil same-origin → '/api' (tak perlu env apa pun)
+//  • SSR      : butuh URL absolut. Pakai VERCEL_URL otomatis saat di-deploy,
+//               atau API_URL kalau ingin menunjuk backend Express terpisah.
+function resolveBase() {
+  if (typeof window !== 'undefined') return '/api'                       // Browser
+  if (process.env.API_URL)     return `${process.env.API_URL}/api`       // override manual
+  if (process.env.VERCEL_URL)  return `https://${process.env.VERCEL_URL}/api` // di Vercel
+  return 'http://127.0.0.1:3000/api'                                     // dev lokal
+}
+const BASE = resolveBase()
 
 // ─── Helper fetch ─────────────────────────────────────────────────────────────
 async function apiFetch(path, options = {}) {
