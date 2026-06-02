@@ -1,14 +1,16 @@
 import Link from 'next/link'
-import { getProducts } from '@/lib/api'
-import ProductCard from '@/components/ProductCard'
+import ServicesScroll from '@/components/ServicesScroll'
 
 // Hero Section
 function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background warm gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-espresso via-coffee to-mocha" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(196,149,106,0.3),transparent)]" />
+      {/* Background image — coffee shop estetik */}
+      <div className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1453614512568-c4024d13c247?auto=format&fit=crop&w=1920&q=80")' }} />
+      {/* Overlay hangat agar teks tetap terbaca */}
+      <div className="absolute inset-0 bg-gradient-to-br from-espresso/90 via-espresso/75 to-coffee/80" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(196,149,106,0.25),transparent)]" />
 
       {/* Texture overlay */}
       <div className="absolute inset-0 opacity-10"
@@ -22,7 +24,7 @@ function Hero() {
 
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
         <p className="font-sans text-latte text-sm tracking-[0.3em] uppercase mb-4 animate-fade-up">
-          ☕ Kopi Spesialti Indonesia
+          Kopi Spesialti Indonesia
         </p>
         <h1 className="font-serif text-5xl md:text-7xl text-warm-white leading-tight mb-6 animate-fade-up"
           style={{ animationDelay: '0.1s' }}>
@@ -41,9 +43,9 @@ function Hero() {
             className="bg-caramel hover:bg-latte text-espresso font-bold px-8 py-4 rounded-2xl shadow-warm-lg transition-all duration-200 text-lg">
             Lihat Menu Lengkap →
           </Link>
-          <Link href="#featured"
+          <Link href="#layanan"
             className="border-2 border-cream/50 text-cream hover:bg-cream/10 font-semibold px-8 py-4 rounded-2xl transition-all duration-200 text-lg">
-            Menu Favorit
+            Tempat & Layanan
           </Link>
         </div>
       </div>
@@ -57,68 +59,72 @@ function Hero() {
   )
 }
 
+// Ikon line-art cokelat (tanpa emoji) — menyatu dengan tema warm & cozy
+const iconProps = {
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.6,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  viewBox: '0 0 24 24',
+}
+
+function IconBean({ className }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <path d="M12 3c-4 0-7 4-7 9s3 9 7 9 7-4 7-9-3-9-7-9z" />
+      <path d="M9 5c2.5 3.5 4 9.5 6 13.5" />
+    </svg>
+  )
+}
+function IconBrew({ className }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <path d="M4 6h16" />
+      <path d="M6 6l3 7h6l3-7" />
+      <path d="M9.5 13l.8 4h3.4l.8-4" />
+      <path d="M12 19v2" />
+    </svg>
+  )
+}
+function IconCozy({ className }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <path d="M5 10V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2" />
+      <path d="M4 10a2 2 0 0 1 2 2v4h12v-4a2 2 0 0 1 2-2" />
+      <path d="M7 16v3M17 16v3" />
+    </svg>
+  )
+}
+function IconLeaf({ className }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <path d="M5 19C5 11 11 5 19 5c0 8-6 14-14 14z" />
+      <path d="M5 19c3.5-3.5 6.5-6.5 9-9" />
+    </svg>
+  )
+}
+
 // About strip
 function AboutStrip() {
   const features = [
-    { icon: '🌿', title: 'Single Origin',  desc: 'Biji pilihan dari Flores, Toraja, Aceh Gayo' },
-    { icon: '✋', title: 'Manual Brew',    desc: 'V60, Chemex, AeroPress oleh barista terlatih' },
-    { icon: '🏡', title: 'Cozy Space',    desc: 'Suasana hangat untuk kerja & bersantai' },
-    { icon: '🌱', title: 'Eco Friendly',  desc: 'Kemasan ramah lingkungan, cup daur ulang' },
+    { Icon: IconBean, title: 'Single Origin', desc: 'Biji pilihan dari Flores, Toraja, Aceh Gayo' },
+    { Icon: IconBrew, title: 'Manual Brew',   desc: 'V60, Chemex, AeroPress oleh barista terlatih' },
+    { Icon: IconCozy, title: 'Cozy Space',    desc: 'Suasana hangat untuk kerja & bersantai' },
+    { Icon: IconLeaf, title: 'Eco Friendly',  desc: 'Kemasan ramah lingkungan, cup daur ulang' },
   ]
   return (
     <section id="about" className="py-20 px-6 bg-parchment">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {features.map((f, i) => (
           <div key={i} className="text-center p-6 bg-warm-white rounded-2xl shadow-warm-sm">
-            <span className="text-4xl block mb-3">{f.icon}</span>
+            <span className="mx-auto mb-4 w-14 h-14 rounded-full bg-cream flex items-center justify-center text-mocha">
+              <f.Icon className="w-7 h-7" />
+            </span>
             <h3 className="font-serif font-semibold text-espresso mb-1">{f.title}</h3>
             <p className="text-sm text-latte font-sans leading-relaxed">{f.desc}</p>
           </div>
         ))}
-      </div>
-    </section>
-  )
-}
-
-// Featured products — fetch dari backend
-async function FeaturedMenu() {
-  let products = []
-  try {
-    const res = await getProducts({ featured: 'true' })
-    products = res.data ?? []
-  } catch {
-    // Jika backend belum aktif, tampilkan placeholder
-    products = []
-  }
-
-  return (
-    <section id="featured" className="py-24 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-14">
-          <p className="font-sans text-latte text-sm tracking-widest uppercase mb-2">Menu Pilihan</p>
-          <h2 className="font-serif text-4xl md:text-5xl text-espresso">Favorit Pelanggan Kami</h2>
-          <p className="text-latte mt-4 max-w-xl mx-auto font-sans">
-            Dipilih berdasarkan rating dan ulasan pelanggan setia kami setiap bulan.
-          </p>
-        </div>
-
-        {products.length === 0 ? (
-          <div className="text-center py-16 bg-cream rounded-3xl">
-            <span className="text-5xl block mb-4">☕</span>
-            <p className="font-serif text-xl text-coffee">Menu sedang dimuat...</p>
-            <p className="text-latte text-sm mt-2">Pastikan backend sudah berjalan</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map(p => <ProductCard key={p.id} product={p} />)}
-          </div>
-        )}
-
-        <div className="text-center mt-10">
-          <Link href="/menu" className="btn-outline inline-block">
-            Lihat Semua Menu →
-          </Link>
-        </div>
       </div>
     </section>
   )
@@ -129,7 +135,7 @@ export default function HomePage() {
     <>
       <Hero />
       <AboutStrip />
-      <FeaturedMenu />
+      <ServicesScroll />
     </>
   )
 }

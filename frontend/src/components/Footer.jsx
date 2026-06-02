@@ -1,10 +1,12 @@
+import Logo from '@/components/Logo'
+
 export default function Footer() {
   return (
     <footer className="bg-espresso text-cream py-12 px-6">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-2xl">☕</span>
+          <div className="flex items-center gap-2.5 mb-3">
+            <Logo className="w-8 h-8 text-caramel" />
             <span className="font-serif font-bold text-xl text-warm-white">Kopi Nusantara</span>
           </div>
           <p className="text-cream/60 text-sm leading-relaxed font-sans">
@@ -33,7 +35,7 @@ export default function Footer() {
 
       <div className="max-w-6xl mx-auto border-t border-coffee/40 mt-10 pt-6 text-center">
         <p className="text-cream/40 text-xs font-sans">
-          © {new Date().getFullYear()} Kopi Nusantara. Dibuat dengan ☕ dan ❤️ oleh VinSite.
+          © 2026 Kopi Nusantara. All rights reserved.
         </p>
       </div>
     </footer>

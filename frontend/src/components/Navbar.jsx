@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useCart } from '@/context/CartContext'
 import { motion, AnimatePresence } from 'framer-motion'
+import Logo from '@/components/Logo'
 
 const navLinks = [
   { href: '/',         label: 'Beranda' },
@@ -26,13 +27,13 @@ export default function Navbar() {
     <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
       scrolled ? 'bg-warm-white/95 backdrop-blur-md shadow-warm' : 'bg-transparent'
     }`}>
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto pl-6 pr-4 py-4 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl">☕</span>
+        <Link href="/" className="flex items-center gap-2.5">
+          <Logo className={`w-8 h-8 transition-colors duration-300 ${scrolled ? 'text-coffee' : 'text-warm-white'}`} />
           <div>
-            <span className="font-serif font-bold text-xl text-espresso">Kopi Nusantara</span>
-            <span className="block text-[10px] text-latte font-sans tracking-widest uppercase -mt-0.5">
+            <span className={`font-serif font-bold text-xl transition-colors duration-300 ${scrolled ? 'text-espresso' : 'text-warm-white'}`}>Kopi Nusantara</span>
+            <span className={`block text-[10px] font-sans tracking-widest uppercase -mt-0.5 transition-colors duration-300 ${scrolled ? 'text-latte' : 'text-cream/80'}`}>
               Est. 2024
             </span>
           </div>
@@ -44,7 +45,7 @@ export default function Navbar() {
             <Link
               key={l.href}
               href={l.href}
-              className="font-sans font-medium text-coffee hover:text-espresso transition-colors duration-200 relative group"
+              className={`font-sans font-medium transition-colors duration-200 relative group ${scrolled ? 'text-coffee hover:text-espresso' : 'text-cream hover:text-white'}`}
             >
               {l.label}
               <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-caramel group-hover:w-full transition-all duration-300 rounded-full" />
@@ -61,7 +62,7 @@ export default function Navbar() {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            <span className="hidden sm:inline">Keranjang</span>
+            <span className="hidden sm:inline">Cart</span>
             {itemCount > 0 && (
               <motion.span
                 key={itemCount}
@@ -77,13 +78,13 @@ export default function Navbar() {
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileOpen(o => !o)}
-            className="md:hidden p-2 text-coffee"
+            className="md:hidden p-2"
             aria-label="Menu"
           >
             <div className="flex flex-col gap-1.5 w-5">
-              <span className={`h-0.5 bg-coffee rounded transition-all ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
-              <span className={`h-0.5 bg-coffee rounded transition-all ${mobileOpen ? 'opacity-0' : ''}`} />
-              <span className={`h-0.5 bg-coffee rounded transition-all ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+              <span className={`h-0.5 rounded transition-all ${scrolled ? 'bg-coffee' : 'bg-warm-white'} ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
+              <span className={`h-0.5 rounded transition-all ${scrolled ? 'bg-coffee' : 'bg-warm-white'} ${mobileOpen ? 'opacity-0' : ''}`} />
+              <span className={`h-0.5 rounded transition-all ${scrolled ? 'bg-coffee' : 'bg-warm-white'} ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`} />
             </div>
           </button>
         </div>

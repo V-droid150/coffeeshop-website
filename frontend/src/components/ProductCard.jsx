@@ -18,7 +18,7 @@ export default function ProductCard({ product }) {
 
   const handleAdd = () => {
     addItem(product)
-    toast.success(`${product.name} ditambahkan ke keranjang! ☕`, { duration: 2000 })
+    toast.success(`${product.name} ditambahkan ke cart`, { duration: 2000 })
   }
 
   return (
@@ -31,22 +31,29 @@ export default function ProductCard({ product }) {
       className="card group flex flex-col"
     >
       {/* Gambar produk */}
-      <div className="relative h-44 bg-gradient-to-br from-cream to-beige flex items-center justify-center overflow-hidden">
-        {/* Emoji placeholder — ganti dengan <Image> Next.js saat punya foto nyata */}
-        <span className="text-6xl group-hover:scale-110 transition-transform duration-300">
-          {product.category_slug === 'pastry' ? '🥐' : product.category_slug === 'non-kopi' ? '🍵' : '☕'}
-        </span>
+      <div className="relative h-44 bg-cream overflow-hidden">
+        <img
+          src={product.image_url}
+          alt={product.name}
+          loading="lazy"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        {/* Gradien lembut agar badge terbaca */}
+        <div className="absolute inset-0 bg-gradient-to-t from-espresso/20 to-transparent" />
 
         {/* Badge featured */}
         {product.is_featured && (
-          <span className="absolute top-3 left-3 bg-caramel text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-warm-sm">
-            ⭐ Favorit
+          <span className="absolute top-3 left-3 flex items-center gap-1 bg-caramel text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-warm-sm">
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.8 6.1 20.2l1.2-6.6L2.5 9l6.6-.9z" />
+            </svg>
+            Favorit
           </span>
         )}
 
         {/* Badge kategori */}
         <span className={`absolute top-3 right-3 badge ${CATEGORY_COLORS[product.category_slug] || 'bg-cream text-coffee'}`}>
-          {product.category_icon} {product.category_name}
+          {product.category_name}
         </span>
       </div>
 

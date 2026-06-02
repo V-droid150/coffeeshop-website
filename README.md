@@ -44,9 +44,9 @@ DELETE /api/products/:id    → Hapus produk [AUTH]
 
 GET  /api/categories        → Semua kategori
 
-POST /api/orders            → Buat pesanan baru
+POST /api/orders            → Buat pesanan ONLINE (delivery/pickup + metode bayar)
 GET  /api/orders            → Semua pesanan [AUTH]
-PATCH /api/orders/:id/status → Update status [AUTH]
+PATCH /api/orders/:id/status → Update status [AUTH] (pending→preparing→ready→delivering→completed)
 
 POST /api/auth/login        → Login admin
 ```

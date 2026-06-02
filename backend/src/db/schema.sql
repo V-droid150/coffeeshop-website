@@ -27,18 +27,31 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at   TIMESTAMPTZ     DEFAULT NOW()
 );
 
--- ─── Pesanan ─────────────────────────────────────────────────
+-- ─── Pesanan (KHUSUS ORDER ONLINE) ───────────────────────────
+-- Hanya melayani pesanan online: delivery (diantar) atau pickup (ambil di toko).
+-- Tidak ada konsep dine-in / nomor meja.
 CREATE TABLE IF NOT EXISTS orders (
-  id              SERIAL          PRIMARY KEY,
-  customer_name   VARCHAR(100)    NOT NULL,
-  customer_email  VARCHAR(100),
-  customer_phone  VARCHAR(20),
-  table_number    VARCHAR(10),
-  notes           TEXT,
-  total_amount    DECIMAL(12, 0)  NOT NULL,
-  status          VARCHAR(20)     DEFAULT 'pending'
-                                  CHECK (status IN ('pending','preparing','ready','completed','cancelled')),
-  created_at      TIMESTAMPTZ     DEFAULT NOW()
+  id               SERIAL          PRIMARY KEY,
+  customer_name    VARCHAR(100)    NOT NULL,
+  customer_phone   VARCHAR(20)     NOT NULL,            -- wajib: kontak untuk order online
+  customer_email   VARCHAR(100),
+  fulfillment_type VARCHAR(10)     NOT NULL
+                                   CHECK (fulfillment_type IN ('delivery','pickup')),
+  delivery_address TEXT,                                -- wajib jika fulfillment_type = 'delivery'
+  payment_method   VARCHAR(20)     NOT NULL
+                                   CHECK (payment_method IN ('transfer','ewallet','cod')),
+  notes            TEXT,
+  subtotal         DECIMAL(12, 0)  NOT NULL,
+  delivery_fee     DECIMAL(12, 0)  NOT NULL DEFAULT 0,
+  total_amount     DECIMAL(12, 0)  NOT NULL,
+  status           VARCHAR(20)     DEFAULT 'pending'
+                                   CHECK (status IN ('pending','preparing','ready','delivering','completed','cancelled')),
+  created_at       TIMESTAMPTZ     DEFAULT NOW(),
+  -- Alamat wajib terisi bila delivery
+  CONSTRAINT chk_delivery_address CHECK (
+    fulfillment_type <> 'delivery'
+    OR (delivery_address IS NOT NULL AND length(trim(delivery_address)) > 0)
+  )
 );
 
 -- ─── Item dalam pesanan ───────────────────────────────────────

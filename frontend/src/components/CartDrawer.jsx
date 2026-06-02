@@ -34,7 +34,7 @@ export default function CartDrawer() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-cream">
               <div>
-                <h2 className="font-serif text-xl text-espresso">Keranjang</h2>
+                <h2 className="font-serif text-xl text-espresso">Cart</h2>
                 <p className="text-sm text-latte font-sans">{itemCount} item</p>
               </div>
               <button
@@ -51,8 +51,12 @@ export default function CartDrawer() {
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               {items.length === 0 ? (
                 <div className="text-center py-16">
-                  <span className="text-5xl block mb-4">☕</span>
-                  <p className="font-serif text-lg text-coffee mb-2">Keranjang kosong</p>
+                  <span className="mx-auto mb-4 w-14 h-14 rounded-full bg-cream flex items-center justify-center text-coffee">
+                    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </span>
+                  <p className="font-serif text-lg text-coffee mb-2">Cart masih kosong</p>
                   <p className="text-sm text-latte">Tambahkan menu favoritmu!</p>
                   <Link
                     href="/menu"
@@ -73,10 +77,12 @@ export default function CartDrawer() {
                       exit={{ opacity: 0, x: 50 }}
                       className="flex gap-4 bg-white rounded-2xl p-3 shadow-warm-sm"
                     >
-                      {/* Placeholder image */}
-                      <div className="w-16 h-16 bg-cream rounded-xl flex items-center justify-center text-2xl shrink-0">
-                        ☕
-                      </div>
+                      {/* Foto produk */}
+                      <img
+                        src={item.image_url}
+                        alt={item.name}
+                        className="w-16 h-16 bg-cream rounded-xl object-cover shrink-0"
+                      />
 
                       <div className="flex-1 min-w-0">
                         <p className="font-serif font-semibold text-espresso text-sm truncate">{item.name}</p>

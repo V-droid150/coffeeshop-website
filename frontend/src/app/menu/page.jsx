@@ -30,13 +30,18 @@ export default async function MenuPage({ searchParams }) {
 
   return (
     <div className="pt-24 pb-20 min-h-screen bg-warm-white">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-espresso to-coffee py-16 px-6 text-center mb-12">
-        <p className="font-sans text-latte text-sm tracking-widest uppercase mb-2">Pilihan Terbaik</p>
-        <h1 className="font-serif text-4xl md:text-5xl text-warm-white mb-3">Menu Kami</h1>
-        <p className="font-sans text-cream/70 max-w-md mx-auto">
-          Setiap produk dibuat dengan bahan-bahan segar pilihan dan penuh cinta.
-        </p>
+      {/* Header — background foto kopi & pastry tertata di meja */}
+      <div className="relative py-20 px-6 text-center mb-12 overflow-hidden">
+        <div className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1920&q=80")' }} />
+        <div className="absolute inset-0 bg-gradient-to-r from-espresso/90 to-coffee/85" />
+        <div className="relative z-10">
+          <p className="font-sans text-latte text-sm tracking-widest uppercase mb-2">Pilihan Terbaik</p>
+          <h1 className="font-serif text-4xl md:text-5xl text-warm-white mb-3">Menu Kami</h1>
+          <p className="font-sans text-cream/80 max-w-md mx-auto">
+            Setiap produk dibuat dengan bahan-bahan segar pilihan dan penuh cinta.
+          </p>
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-6">

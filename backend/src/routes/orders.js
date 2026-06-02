@@ -3,15 +3,43 @@ const router       = express.Router()
 const pool         = require('../db/pool')
 const authenticate = require('../middleware/authenticate')
 
-// ── POST /api/orders ──────────────────────────────────────────────────────────
-// Body: { customer_name, customer_phone, table_number, notes, items: [{product_id, quantity}] }
+// Ongkos kirim flat untuk delivery (pickup = gratis)
+const DELIVERY_FEE     = 10000
+const FULFILLMENT_TYPES = ['delivery', 'pickup']
+const PAYMENT_METHODS   = ['transfer', 'ewallet', 'cod']
+
+// ── POST /api/orders — KHUSUS ORDER ONLINE ──────────────────────────────────────
+// Body: {
+//   customer_name, customer_phone, customer_email?,
+//   fulfillment_type: 'delivery'|'pickup',
+//   delivery_address?  (wajib jika delivery),
+//   payment_method: 'transfer'|'ewallet'|'cod',
+//   notes?, items: [{ product_id, quantity }]
+// }
 router.post('/', async (req, res) => {
   const client = await pool.connect()
   try {
-    const { customer_name, customer_phone, customer_email, table_number, notes, items } = req.body
+    const {
+      customer_name, customer_phone, customer_email,
+      fulfillment_type, delivery_address, payment_method,
+      notes, items,
+    } = req.body
 
-    if (!customer_name || !items?.length) {
-      return res.status(400).json({ success: false, error: 'customer_name dan items wajib diisi' })
+    // ── Validasi khusus order online ──────────────────────────────────────────
+    if (!customer_name || !customer_phone) {
+      return res.status(400).json({ success: false, error: 'Nama dan nomor telepon wajib diisi' })
+    }
+    if (!items?.length) {
+      return res.status(400).json({ success: false, error: 'Pesanan tidak boleh kosong' })
+    }
+    if (!FULFILLMENT_TYPES.includes(fulfillment_type)) {
+      return res.status(400).json({ success: false, error: 'Metode pengantaran tidak valid (delivery / pickup)' })
+    }
+    if (fulfillment_type === 'delivery' && !delivery_address?.trim()) {
+      return res.status(400).json({ success: false, error: 'Alamat pengantaran wajib diisi untuk delivery' })
+    }
+    if (!PAYMENT_METHODS.includes(payment_method)) {
+      return res.status(400).json({ success: false, error: 'Metode pembayaran tidak valid' })
     }
 
     await client.query('BEGIN')
@@ -19,7 +47,7 @@ router.post('/', async (req, res) => {
     // Ambil harga produk dari DB (jangan percaya harga dari client)
     const productIds = items.map(i => i.product_id)
     const { rows: products } = await client.query(
-      'SELECT id, name, price, stock FROM products WHERE id = ANY($1) AND is_available = TRUE',
+      'SELECT id, name, price FROM products WHERE id = ANY($1) AND is_available = TRUE',
       [productIds]
     )
 
@@ -29,19 +57,26 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Beberapa produk tidak tersedia' })
     }
 
-    // Hitung total dari harga server
+    // Hitung subtotal dari harga server + ongkir
     const productMap = Object.fromEntries(products.map(p => [p.id, p]))
-    let total = 0
+    let subtotal = 0
     for (const item of items) {
-      const prod = productMap[item.product_id]
-      total += prod.price * item.quantity
+      subtotal += productMap[item.product_id].price * item.quantity
     }
+    const delivery_fee = fulfillment_type === 'delivery' ? DELIVERY_FEE : 0
+    const total = subtotal + delivery_fee
 
     // Buat order
     const { rows: [order] } = await client.query(
-      `INSERT INTO orders (customer_name, customer_email, customer_phone, table_number, notes, total_amount)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [customer_name, customer_email, customer_phone, table_number, notes, total]
+      `INSERT INTO orders
+         (customer_name, customer_phone, customer_email, fulfillment_type, delivery_address,
+          payment_method, notes, subtotal, delivery_fee, total_amount)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      [
+        customer_name, customer_phone, customer_email || null,
+        fulfillment_type, fulfillment_type === 'delivery' ? delivery_address.trim() : null,
+        payment_method, notes || null, subtotal, delivery_fee, total,
+      ]
     )
 
     // Buat order_items
@@ -55,7 +90,13 @@ router.post('/', async (req, res) => {
     }
 
     await client.query('COMMIT')
-    res.status(201).json({ success: true, data: { order_id: order.id, total, status: order.status } })
+    res.status(201).json({
+      success: true,
+      data: {
+        order_id: order.id, subtotal, delivery_fee, total,
+        status: order.status, fulfillment_type, payment_method,
+      },
+    })
   } catch (err) {
     await client.query('ROLLBACK')
     console.error('[POST /orders]', err.message)
@@ -94,7 +135,7 @@ router.get('/', authenticate, async (req, res) => {
 router.patch('/:id/status', authenticate, async (req, res) => {
   try {
     const { status } = req.body
-    const validStatuses = ['pending','preparing','ready','completed','cancelled']
+    const validStatuses = ['pending','preparing','ready','delivering','completed','cancelled']
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, error: 'Status tidak valid' })
     }
