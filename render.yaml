@@ -1,0 +1,16 @@
+# Render Blueprint — backend Kopi Nusantara
+# Render akan otomatis membaca file ini saat "New > Blueprint".
+# Menjalankan API in-memory (server.dev.js) — cocok untuk demo/portofolio,
+# tanpa perlu provisioning database. Data order direset saat service restart.
+services:
+  - type: web
+    name: kopi-nusantara-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.dev.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
