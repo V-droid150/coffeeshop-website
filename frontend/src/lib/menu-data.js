@@ -29,4 +29,5 @@ export const products = [
 // Konfigurasi order online (selaras dengan backend Express)
 export const DELIVERY_FEE      = 10000
 export const FULFILLMENT_TYPES = ['delivery', 'pickup']
-export const PAYMENT_METHODS   = ['transfer', 'ewallet', 'cod']
+// 'online' = lewat Midtrans (QRIS/GoPay/VA/kartu, dipilih di popup), 'cod' = bayar di tempat
+export const PAYMENT_METHODS   = ['online', 'cod']

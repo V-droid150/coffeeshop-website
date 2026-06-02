@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Script from 'next/script'
 import { useCart } from '@/context/CartContext'
 import { createOrder } from '@/lib/api'
 import Link from 'next/link'
@@ -13,10 +14,16 @@ function formatRupiah(n) {
 // Harus sama dengan DELIVERY_FEE di backend (sumber kebenaran tetap server)
 const DELIVERY_FEE = 10000
 
+// Konfigurasi Midtrans Snap (client)
+const MIDTRANS_IS_PROD = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true'
+const SNAP_SRC = MIDTRANS_IS_PROD
+  ? 'https://app.midtrans.com/snap/snap.js'
+  : 'https://app.sandbox.midtrans.com/snap/snap.js'
+const MIDTRANS_CLIENT_KEY = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
+
 const PAYMENT_OPTIONS = [
-  { value: 'transfer', label: 'Transfer Bank',     desc: 'BCA / Mandiri / BNI' },
-  { value: 'ewallet',  label: 'E-Wallet',          desc: 'GoPay / OVO / Dana' },
-  { value: 'cod',      label: 'Bayar di Tempat',   desc: 'Tunai saat terima/ambil' },
+  { value: 'online', label: 'Bayar Online', desc: 'QRIS / GoPay / ShopeePay / VA / Kartu' },
+  { value: 'cod',    label: 'Bayar di Tempat (COD)', desc: 'Tunai saat terima / ambil' },
 ]
 
 const EMPTY_FORM = {
@@ -25,7 +32,7 @@ const EMPTY_FORM = {
   customer_email: '',
   fulfillment_type: 'delivery',
   delivery_address: '',
-  payment_method: 'transfer',
+  payment_method: 'online',
   notes: '',
 }
 
@@ -35,9 +42,9 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(null)
 
-  const isDelivery   = form.fulfillment_type === 'delivery'
-  const deliveryFee  = isDelivery ? DELIVERY_FEE : 0
-  const grandTotal   = total + deliveryFee
+  const isDelivery  = form.fulfillment_type === 'delivery'
+  const deliveryFee = isDelivery ? DELIVERY_FEE : 0
+  const grandTotal  = total + deliveryFee
 
   const setField = (name, value) => setForm(p => ({ ...p, [name]: value }))
 
@@ -56,6 +63,12 @@ export default function CheckoutPage() {
     )
   }
 
+  // Tampilkan layar sukses (dipakai untuk COD & setelah pembayaran online)
+  const finish = (data, paymentStatus) => {
+    setSuccess({ ...data, payment_status: paymentStatus })
+    clearCart()
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.customer_name.trim())  return toast.error('Nama wajib diisi')
@@ -70,12 +83,24 @@ export default function CheckoutPage() {
         ...form,
         items: items.map(i => ({ product_id: i.id, quantity: i.quantity })),
       })
-      setSuccess(res.data)
-      clearCart()
+      const data = res.data
+
+      // Pembayaran online → buka popup Midtrans Snap
+      if (data.snap_token && typeof window !== 'undefined' && window.snap) {
+        window.snap.pay(data.snap_token, {
+          onSuccess: () => { finish(data, 'paid');    toast.success('Pembayaran berhasil') },
+          onPending: () => { finish(data, 'pending'); toast('Menunggu pembayaran') },
+          onError:   () => { toast.error('Pembayaran gagal'); setLoading(false) },
+          onClose:   () => { toast('Pembayaran dibatalkan'); setLoading(false) },
+        })
+        return
+      }
+
+      // COD atau pembayaran belum dikonfigurasi → langsung selesai
+      finish(data, form.payment_method === 'cod' ? 'unpaid' : 'pending')
       toast.success('Pesanan berhasil dibuat')
     } catch (err) {
       toast.error(err.message || 'Gagal membuat pesanan')
-    } finally {
       setLoading(false)
     }
   }
@@ -83,6 +108,9 @@ export default function CheckoutPage() {
   // ── Success state ──────────────────────────────────────────────────────────
   if (success) {
     const wasDelivery = success.fulfillment_type === 'delivery'
+    const paid    = success.payment_status === 'paid'
+    const pending = success.payment_status === 'pending'
+    const isCod   = success.payment_method === 'cod'
     return (
       <div className="pt-32 pb-20 px-6 min-h-screen flex items-center justify-center">
         <motion.div
@@ -90,12 +118,18 @@ export default function CheckoutPage() {
           animate={{ scale: 1, opacity: 1 }}
           className="bg-white rounded-3xl p-10 shadow-warm-lg max-w-md w-full text-center"
         >
-          <span className="mx-auto mb-5 w-16 h-16 rounded-full bg-leaf-pale flex items-center justify-center text-leaf">
+          <span className={`mx-auto mb-5 w-16 h-16 rounded-full flex items-center justify-center ${
+            paid ? 'bg-leaf-pale text-leaf' : 'bg-caramel/15 text-caramel'
+          }`}>
             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              {paid
+                ? <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                : <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />}
             </svg>
           </span>
-          <h2 className="font-serif text-3xl text-espresso mb-2">Pesanan Diterima!</h2>
+          <h2 className="font-serif text-3xl text-espresso mb-2">
+            {paid ? 'Pembayaran Berhasil!' : 'Pesanan Diterima!'}
+          </h2>
           <p className="text-latte mb-1">Nomor Pesanan</p>
           <p className="font-serif text-4xl font-bold text-coffee mb-4">#{success.order_id}</p>
 
@@ -105,15 +139,11 @@ export default function CheckoutPage() {
               <span className="font-semibold">{wasDelivery ? 'Delivery (diantar)' : 'Pickup (ambil di toko)'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-latte">Subtotal</span>
-              <span>{formatRupiah(success.subtotal)}</span>
+              <span className="text-latte">Pembayaran</span>
+              <span className="font-semibold">
+                {isCod ? 'COD (bayar di tempat)' : paid ? 'Lunas' : 'Menunggu pembayaran'}
+              </span>
             </div>
-            {success.delivery_fee > 0 && (
-              <div className="flex justify-between">
-                <span className="text-latte">Ongkir</span>
-                <span>{formatRupiah(success.delivery_fee)}</span>
-              </div>
-            )}
             <div className="flex justify-between border-t border-beige pt-1 mt-1">
               <span className="text-latte">Total</span>
               <span className="font-bold text-espresso">{formatRupiah(success.total)}</span>
@@ -121,9 +151,11 @@ export default function CheckoutPage() {
           </div>
 
           <p className="text-sm text-latte mb-6">
-            {wasDelivery
-              ? 'Pesananmu sedang disiapkan dan akan segera diantar ke alamatmu.'
-              : 'Pesananmu sedang disiapkan. Kami kabari saat siap diambil di toko.'}
+            {isCod
+              ? (wasDelivery ? 'Pesananmu disiapkan & diantar. Siapkan pembayaran tunai saat tiba.' : 'Pesananmu disiapkan. Bayar tunai saat ambil di toko.')
+              : pending
+                ? 'Selesaikan pembayaran sesuai instruksi. Status akan terupdate otomatis setelah lunas.'
+                : 'Terima kasih! Pesananmu sedang kami siapkan.'}
           </p>
           <Link href="/menu" className="btn-primary block">Pesan Lagi</Link>
         </motion.div>
@@ -137,6 +169,11 @@ export default function CheckoutPage() {
   // ── Form ─────────────────────────────────────────────────────────────────────
   return (
     <div className="pt-24 pb-20 px-6 min-h-screen bg-warm-white">
+      {/* Script popup pembayaran Midtrans Snap */}
+      {MIDTRANS_CLIENT_KEY && (
+        <Script src={SNAP_SRC} data-client-key={MIDTRANS_CLIENT_KEY} strategy="afterInteractive" />
+      )}
+
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <p className="text-latte text-sm font-sans mb-1">
@@ -175,33 +212,26 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Informasi pelanggan */}
+            {/* Informasi kontak */}
             <div className="bg-white rounded-2xl p-6 shadow-warm-sm">
               <h2 className="font-serif text-xl text-espresso mb-5">Informasi Kontak</h2>
-
               <div className="mb-4">
                 <label className="block text-sm font-semibold text-coffee mb-1.5">Nama Lengkap *</label>
-                <input
-                  type="text" value={form.customer_name}
+                <input type="text" value={form.customer_name}
                   onChange={e => setField('customer_name', e.target.value)}
-                  placeholder="Nama Anda" required className={inputClass}
-                />
+                  placeholder="Nama Anda" required className={inputClass} />
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-semibold text-coffee mb-1.5">Nomor WhatsApp *</label>
-                <input
-                  type="tel" value={form.customer_phone}
+                <input type="tel" value={form.customer_phone}
                   onChange={e => setField('customer_phone', e.target.value)}
-                  placeholder="08xx-xxxx-xxxx" required className={inputClass}
-                />
+                  placeholder="08xx-xxxx-xxxx" required className={inputClass} />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-coffee mb-1.5">Email (opsional)</label>
-                <input
-                  type="email" value={form.customer_email}
+                <input type="email" value={form.customer_email}
                   onChange={e => setField('customer_email', e.target.value)}
-                  placeholder="email@contoh.com" className={inputClass}
-                />
+                  placeholder="email@contoh.com" className={inputClass} />
               </div>
             </div>
 
@@ -213,13 +243,10 @@ export default function CheckoutPage() {
                 className="bg-white rounded-2xl p-6 shadow-warm-sm overflow-hidden"
               >
                 <h2 className="font-serif text-xl text-espresso mb-4">Alamat Pengantaran *</h2>
-                <textarea
-                  value={form.delivery_address}
+                <textarea value={form.delivery_address}
                   onChange={e => setField('delivery_address', e.target.value)}
                   placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan, patokan..."
-                  rows={3} required={isDelivery}
-                  className={`${inputClass} resize-none`}
-                />
+                  rows={3} required={isDelivery} className={`${inputClass} resize-none`} />
               </motion.div>
             )}
 
@@ -254,12 +281,10 @@ export default function CheckoutPage() {
             {/* Catatan */}
             <div className="bg-white rounded-2xl p-6 shadow-warm-sm">
               <label className="block text-sm font-semibold text-coffee mb-1.5">Catatan Tambahan</label>
-              <textarea
-                value={form.notes}
+              <textarea value={form.notes}
                 onChange={e => setField('notes', e.target.value)}
                 placeholder="Misal: less sugar, extra ice, alergi susu..."
-                rows={3} className={`${inputClass} resize-none`}
-              />
+                rows={3} className={`${inputClass} resize-none`} />
             </div>
           </div>
 
@@ -294,12 +319,11 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full btn-primary text-lg py-4 mt-6 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Memproses...' : 'Konfirmasi Pesanan'}
+              <button type="submit" disabled={loading}
+                className="w-full btn-primary text-lg py-4 mt-6 disabled:opacity-60 disabled:cursor-not-allowed">
+                {loading
+                  ? 'Memproses...'
+                  : form.payment_method === 'cod' ? 'Konfirmasi Pesanan' : 'Bayar Sekarang'}
               </button>
             </div>
           </div>
