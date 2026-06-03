@@ -58,7 +58,8 @@ export async function POST(request) {
 
   // ── Simpan order (Supabase bila ada, kalau tidak in-memory) ─────────────────
   let orderId
-  let midtransOrderId = `KOPI-${Date.now()}`
+  // ID unik untuk Midtrans — tidak bergantung id DB, jadi bisa di-set langsung saat insert.
+  const midtransOrderId = `KOPI-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
   if (supabase) {
     const { data: order, error } = await supabase.from('orders').insert({
@@ -66,6 +67,7 @@ export async function POST(request) {
       fulfillment_type, delivery_address: addr, payment_method,
       notes: notes || null, subtotal, delivery_fee, total_amount: total,
       status: 'pending', payment_status: payment_method === 'cod' ? 'unpaid' : 'pending',
+      midtrans_order_id: midtransOrderId,
     }).select('id').single()
 
     if (error) {
@@ -73,13 +75,17 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Gagal menyimpan pesanan' }, { status: 500 })
     }
     orderId = order.id
-    midtransOrderId = `KOPI-${order.id}-${Date.now()}`
 
-    await supabase.from('order_items').insert(items.map(i => {
+    // Cek error insert order_items — kalau gagal, batalkan order agar tak ada order tanpa item.
+    const { error: itemsError } = await supabase.from('order_items').insert(items.map(i => {
       const p = productMap[i.product_id]
       return { order_id: orderId, product_id: p.id, product_name: p.name, quantity: i.quantity, price_at_order: p.price }
     }))
-    await supabase.from('orders').update({ midtrans_order_id: midtransOrderId }).eq('id', orderId)
+    if (itemsError) {
+      console.error('[orders] supabase order_items insert error:', itemsError.message)
+      await supabase.from('orders').delete().eq('id', orderId) // rollback sederhana
+      return NextResponse.json({ success: false, error: 'Gagal menyimpan item pesanan' }, { status: 500 })
+    }
   } else {
     orderId = memoryOrders.length + 1
     memoryOrders.push({ id: orderId, total, payment_method })
