@@ -41,6 +41,9 @@ export default function CheckoutPage() {
   const [form, setForm]       = useState(EMPTY_FORM)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(null)
+  // Transaksi Midtrans yang sudah dibuat tapi belum dibayar — disimpan agar popup
+  // bisa dibuka lagi tanpa membuat order baru bila user menutup popup tak sengaja.
+  const [pendingPayment, setPendingPayment] = useState(null) // { snap_token, data }
 
   const isDelivery  = form.fulfillment_type === 'delivery'
   const deliveryFee = isDelivery ? DELIVERY_FEE : 0
@@ -69,8 +72,35 @@ export default function CheckoutPage() {
     clearCart()
   }
 
+  // Buka popup Snap untuk token yang sudah ada — TIDAK membuat order baru.
+  const openSnap = (snapToken, data) => {
+    if (typeof window === 'undefined' || !window.snap) {
+      toast.error('Pembayaran belum siap, tunggu sebentar lalu coba lagi')
+      setLoading(false)
+      return
+    }
+    window.snap.pay(snapToken, {
+      onSuccess: () => { setPendingPayment(null); finish(data, 'paid');    toast.success('Pembayaran berhasil') },
+      onPending: () => { setPendingPayment(null); finish(data, 'pending'); toast('Menunggu pembayaran') },
+      onError:   () => { toast.error('Pembayaran gagal'); setLoading(false) },
+      onClose:   () => {
+        // Token tetap disimpan → user bisa membuka lagi lewat tombol "Lanjutkan Pembayaran".
+        toast('Pembayaran dibatalkan. Klik "Lanjutkan Pembayaran" untuk membuka lagi.')
+        setLoading(false)
+      },
+    })
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Sudah ada transaksi tertunda → buka token yang sama, jangan buat order baru.
+    if (pendingPayment) {
+      setLoading(true)
+      openSnap(pendingPayment.snap_token, pendingPayment.data)
+      return
+    }
+
     if (!form.customer_name.trim())  return toast.error('Nama wajib diisi')
     if (!form.customer_phone.trim()) return toast.error('Nomor telepon wajib diisi')
     if (isDelivery && !form.delivery_address.trim()) {
@@ -85,14 +115,10 @@ export default function CheckoutPage() {
       })
       const data = res.data
 
-      // Pembayaran online → buka popup Midtrans Snap
-      if (data.snap_token && typeof window !== 'undefined' && window.snap) {
-        window.snap.pay(data.snap_token, {
-          onSuccess: () => { finish(data, 'paid');    toast.success('Pembayaran berhasil') },
-          onPending: () => { finish(data, 'pending'); toast('Menunggu pembayaran') },
-          onError:   () => { toast.error('Pembayaran gagal'); setLoading(false) },
-          onClose:   () => { toast('Pembayaran dibatalkan'); setLoading(false) },
-        })
+      // Pembayaran online → simpan token lalu buka popup Midtrans Snap
+      if (data.snap_token) {
+        setPendingPayment({ snap_token: data.snap_token, data })
+        openSnap(data.snap_token, data)
         return
       }
 
@@ -323,6 +349,7 @@ export default function CheckoutPage() {
                 className="w-full btn-primary text-lg py-4 mt-6 disabled:opacity-60 disabled:cursor-not-allowed">
                 {loading
                   ? 'Memproses...'
+                  : pendingPayment ? 'Lanjutkan Pembayaran'
                   : form.payment_method === 'cod' ? 'Konfirmasi Pesanan' : 'Bayar Sekarang'}
               </button>
             </div>
