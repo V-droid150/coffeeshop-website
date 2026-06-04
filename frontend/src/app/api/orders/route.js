@@ -48,6 +48,10 @@ export async function POST(request) {
     if (!p) {
       return NextResponse.json({ success: false, error: `Produk id ${item.product_id} tidak ditemukan` }, { status: 400 })
     }
+    // Quantity wajib bilangan bulat positif & wajar — cegah total negatif/NaN & order sampah.
+    if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99) {
+      return NextResponse.json({ success: false, error: `Jumlah untuk "${p.name}" tidak valid (harus 1–99)` }, { status: 400 })
+    }
     subtotal += p.price * item.quantity
   }
   const delivery_fee = fulfillment_type === 'delivery' ? DELIVERY_FEE : 0
@@ -125,11 +129,26 @@ export async function POST(request) {
     }, { status: 201 })
   } catch (err) {
     console.error('[orders] midtrans error:', err.message)
+    // Rollback: hapus order yang sudah tersimpan agar tidak tertinggal order "yatim"
+    // (berstatus pending tapi tanpa transaksi pembayaran).
+    if (supabase) {
+      await supabase.from('order_items').delete().eq('order_id', orderId)
+      await supabase.from('orders').delete().eq('id', orderId)
+    }
     return NextResponse.json({ success: false, error: 'Gagal membuat transaksi pembayaran' }, { status: 502 })
   }
 }
 
-export async function GET() {
+// GET /api/orders — daftar semua order. BERISI DATA PRIBADI pelanggan
+// (nama, telepon, email, alamat), jadi WAJIB dilindungi.
+// Kirim header `Authorization: Bearer <ADMIN_API_TOKEN>`. Bila ADMIN_API_TOKEN
+// belum di-set di environment, endpoint ditolak (aman secara default).
+export async function GET(request) {
+  const token = process.env.ADMIN_API_TOKEN
+  const auth = request.headers.get('authorization')
+  if (!token || auth !== `Bearer ${token}`) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  }
   const supabase = getSupabase()
   if (!supabase) return NextResponse.json({ success: true, data: memoryOrders })
   const { data, error } = await supabase

@@ -17,8 +17,10 @@ async function apiFetch(path, options = {}) {
     headers: { 'Content-Type': 'application/json', ...options.headers },
     ...options,
   })
-  const json = await res.json()
-  if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+  // Respons mungkin bukan JSON (mis. halaman error 500, body kosong) — jangan sampai
+  // res.json() yang gagal menutupi error asli.
+  const json = await res.json().catch(() => null)
+  if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`)
   return json
 }
 
