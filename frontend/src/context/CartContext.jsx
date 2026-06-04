@@ -9,8 +9,14 @@ export function CartProvider({ children }) {
 
   // ── Persist ke localStorage ───────────────────────────────────────────────
   useEffect(() => {
-    const saved = localStorage.getItem('kopi_cart')
-    if (saved) setItems(JSON.parse(saved))
+    try {
+      const saved = localStorage.getItem('kopi_cart')
+      const parsed = saved ? JSON.parse(saved) : null
+      // Hanya pakai bila bentuknya array — cegah crash dari data localStorage yang korup.
+      if (Array.isArray(parsed)) setItems(parsed)
+    } catch {
+      localStorage.removeItem('kopi_cart') // data rusak → buang
+    }
   }, [])
 
   useEffect(() => {
