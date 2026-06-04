@@ -183,7 +183,23 @@ export default function CheckoutPage() {
                 ? 'Selesaikan pembayaran sesuai instruksi. Status akan terupdate otomatis setelah lunas.'
                 : 'Terima kasih! Pesananmu sedang kami siapkan.'}
           </p>
-          <Link href="/menu" className="btn-primary block">Pesan Lagi</Link>
+          {/* Pembayaran online belum lunas (mis. VA/transfer) → buka lagi instruksi
+              pembayaran pakai token yang sama, tanpa membuat order baru. */}
+          {pending && !isCod && success.snap_token && (
+            <button
+              type="button"
+              onClick={() => openSnap(success.snap_token, success)}
+              className="btn-primary block w-full mb-3"
+            >
+              Lanjutkan Pembayaran
+            </button>
+          )}
+          <Link
+            href="/menu"
+            className={`${pending && !isCod && success.snap_token ? 'btn-outline' : 'btn-primary'} block`}
+          >
+            Pesan Lagi
+          </Link>
         </motion.div>
       </div>
     )
