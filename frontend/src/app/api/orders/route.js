@@ -2,14 +2,28 @@ import { NextResponse } from 'next/server'
 import { products, DELIVERY_FEE, FULFILLMENT_TYPES, PAYMENT_METHODS } from '@/lib/menu-data'
 import { getSupabase } from '@/lib/supabase'
 import { getSnap } from '@/lib/midtrans'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
 // Fallback in-memory bila Supabase belum dikonfigurasi (situs tetap jalan).
 const memoryOrders = []
 
+// Batas panjang input — cegah payload raksasa & data sampah masuk database.
+const MAX = { name: 100, phone: 25, email: 254, address: 500, notes: 1000, items: 50 }
+
 // POST /api/orders — order online (delivery/pickup) + pembayaran (online via Midtrans / COD)
 export async function POST(request) {
+  // ── Rate limit: maks 20 order/menit per IP ──────────────────────────────────
+  const ip = getClientIp(request)
+  const rl = rateLimit({ key: `orders:${ip}`, limit: 20, windowMs: 60_000 })
+  if (!rl.ok) {
+    return NextResponse.json(
+      { success: false, error: 'Terlalu banyak permintaan. Coba lagi sebentar.' },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } },
+    )
+  }
+
   let body
   try {
     body = await request.json()
@@ -27,9 +41,16 @@ export async function POST(request) {
   if (!customer_name || !customer_phone) {
     return NextResponse.json({ success: false, error: 'Nama dan nomor telepon wajib diisi' }, { status: 400 })
   }
-  if (!items?.length) {
+  if (!Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ success: false, error: 'Pesanan tidak boleh kosong' }, { status: 400 })
   }
+  // ── Batas panjang input ─────────────────────────────────────────────────────
+  if (String(customer_name).length > MAX.name)        return NextResponse.json({ success: false, error: 'Nama terlalu panjang' }, { status: 400 })
+  if (String(customer_phone).length > MAX.phone)      return NextResponse.json({ success: false, error: 'Nomor telepon terlalu panjang' }, { status: 400 })
+  if (customer_email && String(customer_email).length > MAX.email) return NextResponse.json({ success: false, error: 'Email terlalu panjang' }, { status: 400 })
+  if (delivery_address && String(delivery_address).length > MAX.address) return NextResponse.json({ success: false, error: 'Alamat terlalu panjang' }, { status: 400 })
+  if (notes && String(notes).length > MAX.notes)      return NextResponse.json({ success: false, error: 'Catatan terlalu panjang' }, { status: 400 })
+  if (items.length > MAX.items)                        return NextResponse.json({ success: false, error: 'Terlalu banyak jenis item dalam satu pesanan' }, { status: 400 })
   if (!FULFILLMENT_TYPES.includes(fulfillment_type)) {
     return NextResponse.json({ success: false, error: 'Metode pengantaran tidak valid' }, { status: 400 })
   }

@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server'
 import { getCoreApi } from '@/lib/midtrans'
 import { getSupabase } from '@/lib/supabase'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
 // Webhook Midtrans → set URL ini di dashboard Midtrans:
 //   https://<domain-vercel-anda>/api/payment/notification
 export async function POST(request) {
+  // Rate limit longgar (300/menit/IP) — meredam banjir tanpa memblokir retry sah
+  // Midtrans. Notifikasi tetap diverifikasi signature di bawah, jadi yang palsu ditolak.
+  const ip = getClientIp(request)
+  const rl = rateLimit({ key: `webhook:${ip}`, limit: 300, windowMs: 60_000 })
+  if (!rl.ok) return NextResponse.json({ ok: false, error: 'rate limited' }, { status: 429 })
+
   const core = getCoreApi()
   if (!core) return NextResponse.json({ ok: false, error: 'not configured' }, { status: 500 })
 
