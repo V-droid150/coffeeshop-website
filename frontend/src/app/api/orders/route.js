@@ -39,6 +39,12 @@ export async function POST(request) {
   if (!PAYMENT_METHODS.includes(payment_method)) {
     return NextResponse.json({ success: false, error: 'Metode pembayaran tidak valid' }, { status: 400 })
   }
+  // Email opsional. Bila diisi, rapikan spasi & validasi format — email tak valid
+  // (mis. ada spasi) akan ditolak Midtrans dan menggagalkan SELURUH transaksi.
+  const cleanEmail = customer_email?.trim() || null
+  if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    return NextResponse.json({ success: false, error: 'Format email tidak valid (atau kosongkan)' }, { status: 400 })
+  }
 
   // ── Hitung dari harga server ────────────────────────────────────────────────
   const productMap = Object.fromEntries(products.map(p => [p.id, p]))
@@ -67,7 +73,7 @@ export async function POST(request) {
 
   if (supabase) {
     const { data: order, error } = await supabase.from('orders').insert({
-      customer_name, customer_phone, customer_email: customer_email || null,
+      customer_name, customer_phone, customer_email: cleanEmail,
       fulfillment_type, delivery_address: addr, payment_method,
       notes: notes || null, subtotal, delivery_fee, total_amount: total,
       status: 'pending', payment_status: payment_method === 'cod' ? 'unpaid' : 'pending',
@@ -119,7 +125,7 @@ export async function POST(request) {
       customer_details: {
         first_name: customer_name,
         phone: customer_phone,
-        email: customer_email || undefined,
+        email: cleanEmail || undefined,
         shipping_address: addr ? { address: addr } : undefined,
       },
     })
@@ -141,8 +147,8 @@ export async function POST(request) {
       await supabase.from('order_items').delete().eq('order_id', orderId)
       await supabase.from('orders').delete().eq('id', orderId)
     }
-    // SEMENTARA (diagnosa): tampilkan alasan asli agar mudah dilacak dari toast/Network.
-    return NextResponse.json({ success: false, error: `Gagal membuat transaksi pembayaran: ${reason}` }, { status: 502 })
+    // Pesan generik untuk user; alasan asli tetap tercatat di log server (di atas).
+    return NextResponse.json({ success: false, error: 'Gagal membuat transaksi pembayaran' }, { status: 502 })
   }
 }
 

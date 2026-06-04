@@ -111,6 +111,7 @@ export default function CheckoutPage() {
     try {
       const res = await createOrder({
         ...form,
+        customer_email: form.customer_email.trim(), // buang spasi tak sengaja (ditolak Midtrans)
         items: items.map(i => ({ product_id: i.id, quantity: i.quantity })),
       })
       const data = res.data
@@ -184,11 +185,20 @@ export default function CheckoutPage() {
                 : 'Terima kasih! Pesananmu sedang kami siapkan.'}
           </p>
           {/* Pembayaran online belum lunas (mis. VA/transfer) → buka lagi instruksi
-              pembayaran pakai token yang sama, tanpa membuat order baru. */}
-          {pending && !isCod && success.snap_token && (
+              pembayaran. Pakai popup Snap bila tersedia, kalau tidak buka halaman
+              pembayaran Midtrans (snap_redirect_url) di tab baru. Tanpa order baru. */}
+          {pending && !isCod && (success.snap_token || success.snap_redirect_url) && (
             <button
               type="button"
-              onClick={() => openSnap(success.snap_token, success)}
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.snap && success.snap_token) {
+                  openSnap(success.snap_token, success)
+                } else if (success.snap_redirect_url) {
+                  window.open(success.snap_redirect_url, '_blank')
+                } else {
+                  toast.error('Tautan pembayaran tidak tersedia, silakan pesan ulang')
+                }
+              }}
               className="btn-primary block w-full mb-3"
             >
               Lanjutkan Pembayaran
@@ -196,7 +206,7 @@ export default function CheckoutPage() {
           )}
           <Link
             href="/menu"
-            className={`${pending && !isCod && success.snap_token ? 'btn-outline' : 'btn-primary'} block`}
+            className={`${pending && !isCod && (success.snap_token || success.snap_redirect_url) ? 'btn-outline' : 'btn-primary'} block`}
           >
             Pesan Lagi
           </Link>
