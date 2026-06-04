@@ -128,14 +128,21 @@ export async function POST(request) {
       data: { ...baseData, midtrans_order_id: midtransOrderId, snap_token: tx.token, snap_redirect_url: tx.redirect_url },
     }, { status: 201 })
   } catch (err) {
-    console.error('[orders] midtrans error:', err.message)
+    // Ambil alasan asli dari Midtrans (error_messages/status_message) untuk diagnosa.
+    const apiResp = err?.ApiResponse
+    const reason = (Array.isArray(apiResp?.error_messages) && apiResp.error_messages.join('; '))
+      || apiResp?.status_message
+      || err?.message
+      || 'unknown'
+    console.error('[orders] midtrans error:', err?.httpStatusCode || '', reason)
     // Rollback: hapus order yang sudah tersimpan agar tidak tertinggal order "yatim"
     // (berstatus pending tapi tanpa transaksi pembayaran).
     if (supabase) {
       await supabase.from('order_items').delete().eq('order_id', orderId)
       await supabase.from('orders').delete().eq('id', orderId)
     }
-    return NextResponse.json({ success: false, error: 'Gagal membuat transaksi pembayaran' }, { status: 502 })
+    // SEMENTARA (diagnosa): tampilkan alasan asli agar mudah dilacak dari toast/Network.
+    return NextResponse.json({ success: false, error: `Gagal membuat transaksi pembayaran: ${reason}` }, { status: 502 })
   }
 }
 
