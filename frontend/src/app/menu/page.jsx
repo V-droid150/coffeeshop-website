@@ -2,22 +2,25 @@
 // Data di-fetch langsung di server saat render (SSR).
 // Ketika user klik "Tambah", ProductCard (Client Component) mengambil alih.
 // ─────────────────────────────────────────────────────────────────────────────
-import { products as ALL_PRODUCTS, categories } from '@/lib/menu-data'
+import { getProducts, getCategories } from '@/lib/products'
 import ProductCard from '@/components/ProductCard'
 import MenuFilter from './MenuFilter'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: 'Menu — Kopi Nusantara',
   description: 'Jelajahi menu kopi spesialti, minuman non-kopi, dan pastry kami.',
 }
 
-export default function MenuPage({ searchParams }) {
+export default async function MenuPage({ searchParams }) {
   const activeCategory = searchParams?.category ?? 'semua'
 
-  // Data dibaca langsung dari modul (backend menyatu) — tanpa HTTP fetch ke
-  // diri sendiri, jadi andal di server maupun saat di-deploy.
-  const products = ALL_PRODUCTS.filter(p =>
-    p.is_available && (activeCategory === 'semua' || p.category_slug === activeCategory)
+  // Sumber produk: DB (bila tabel `products` ada) atau fallback data statik.
+  const categories = getCategories()
+  const all = await getProducts({ availableOnly: true })
+  const products = all.filter(p =>
+    activeCategory === 'semua' || p.category_slug === activeCategory
   )
 
   return (

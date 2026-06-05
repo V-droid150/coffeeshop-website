@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
-import { products } from '@/lib/menu-data'
+import { getProducts } from '@/lib/products'
 
 export const dynamic = 'force-dynamic'
 
-export function GET(request, { params }) {
+export async function GET(request, { params }) {
+  const products = await getProducts()
   const product = products.find(p => p.id === Number(params.id))
   if (!product) {
     return NextResponse.json({ success: false, error: 'Produk tidak ditemukan' }, { status: 404 })

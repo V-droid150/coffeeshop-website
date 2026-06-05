@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { products, DELIVERY_FEE, FULFILLMENT_TYPES, PAYMENT_METHODS } from '@/lib/menu-data'
+import { DELIVERY_FEE, FULFILLMENT_TYPES, PAYMENT_METHODS } from '@/lib/menu-data'
+import { getProducts } from '@/lib/products'
 import { getSupabase } from '@/lib/supabase'
 import { getSnap } from '@/lib/midtrans'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
@@ -76,7 +77,9 @@ export async function POST(request) {
   }
 
   // ── Hitung dari harga server ────────────────────────────────────────────────
-  const productMap = Object.fromEntries(products.map(p => [p.id, p]))
+  // Sumber produk otoritatif: DB bila tabel `products` ada, kalau tidak data statik.
+  const allProducts = await getProducts()
+  const productMap = Object.fromEntries(allProducts.map(p => [p.id, p]))
   let subtotal = 0
   for (const item of items) {
     const p = productMap[item.product_id]

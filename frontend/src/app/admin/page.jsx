@@ -2,8 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { isAdminAuthed } from '@/lib/admin-auth'
 import { getSupabase } from '@/lib/supabase'
-import Logo from '@/components/Logo'
-import LogoutButton from './LogoutButton'
+import AdminHeader from './AdminHeader'
 import OrderStatusSelect from './OrderStatusSelect'
 
 export const dynamic = 'force-dynamic'
@@ -62,18 +61,7 @@ function StatCard({ label, value, sub }) {
 function Shell({ children }) {
   return (
     <div className="min-h-screen bg-parchment">
-      <header className="bg-espresso">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Logo className="w-7 h-7 text-caramel" />
-            <div>
-              <p className="font-serif font-bold text-warm-white leading-tight">Dashboard Admin</p>
-              <p className="text-[11px] text-cream/60 font-sans tracking-wide">Kopi Nusantara</p>
-            </div>
-          </div>
-          <LogoutButton />
-        </div>
-      </header>
+      <AdminHeader />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">{children}</main>
     </div>
   )
