@@ -1,6 +1,12 @@
+'use client'
+import { usePathname } from 'next/navigation'
 import Logo from '@/components/Logo'
 
 export default function Footer() {
+  const pathname = usePathname()
+  // Sembunyikan footer storefront di area dashboard admin.
+  if (pathname?.startsWith('/admin')) return null
+
   return (
     <footer className="bg-espresso text-cream py-12 px-6">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useCart } from '@/context/CartContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import Logo from '@/components/Logo'
@@ -16,12 +17,16 @@ export default function Navbar() {
   const { itemCount, setIsOpen } = useCart()
   const [scrolled, setScrolled]  = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  // Sembunyikan navbar storefront di area dashboard admin.
+  if (pathname?.startsWith('/admin')) return null
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
