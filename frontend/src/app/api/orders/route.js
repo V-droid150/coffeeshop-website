@@ -12,6 +12,9 @@ const memoryOrders = []
 // Batas panjang input — cegah payload raksasa & data sampah masuk database.
 const MAX = { name: 100, phone: 25, email: 254, address: 500, notes: 1000, items: 50 }
 
+// Nomor WhatsApp: wajib diawali +62 atau 0, sisanya angka (8–13 digit).
+const PHONE_RE = /^(\+62|0)[0-9]{8,13}$/
+
 // POST /api/orders — order online (delivery/pickup) + pembayaran (online via Midtrans / COD)
 export async function POST(request) {
   // ── Rate limit: maks 20 order/menit per IP ──────────────────────────────────
@@ -47,6 +50,11 @@ export async function POST(request) {
   // ── Batas panjang input ─────────────────────────────────────────────────────
   if (String(customer_name).length > MAX.name)        return NextResponse.json({ success: false, error: 'Nama terlalu panjang' }, { status: 400 })
   if (String(customer_phone).length > MAX.phone)      return NextResponse.json({ success: false, error: 'Nomor telepon terlalu panjang' }, { status: 400 })
+  // Normalisasi (buang spasi/strip, '+' hanya di depan) lalu wajib lolos format.
+  const cleanPhone = String(customer_phone).replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '')
+  if (!PHONE_RE.test(cleanPhone)) {
+    return NextResponse.json({ success: false, error: 'Nomor WhatsApp tidak valid (harus diawali +62 atau 0)' }, { status: 400 })
+  }
   if (customer_email && String(customer_email).length > MAX.email) return NextResponse.json({ success: false, error: 'Email terlalu panjang' }, { status: 400 })
   if (delivery_address && String(delivery_address).length > MAX.address) return NextResponse.json({ success: false, error: 'Alamat terlalu panjang' }, { status: 400 })
   if (notes && String(notes).length > MAX.notes)      return NextResponse.json({ success: false, error: 'Catatan terlalu panjang' }, { status: 400 })
@@ -94,7 +102,7 @@ export async function POST(request) {
 
   if (supabase) {
     const { data: order, error } = await supabase.from('orders').insert({
-      customer_name, customer_phone, customer_email: cleanEmail,
+      customer_name, customer_phone: cleanPhone, customer_email: cleanEmail,
       fulfillment_type, delivery_address: addr, payment_method,
       notes: notes || null, subtotal, delivery_fee, total_amount: total,
       status: 'pending', payment_status: payment_method === 'cod' ? 'unpaid' : 'pending',
@@ -145,7 +153,7 @@ export async function POST(request) {
       item_details,
       customer_details: {
         first_name: customer_name,
-        phone: customer_phone,
+        phone: cleanPhone,
         email: cleanEmail || undefined,
         shipping_address: addr ? { address: addr } : undefined,
       },

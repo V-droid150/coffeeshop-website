@@ -98,18 +98,18 @@ function ServicePanel({ service, index, total, progress }) {
       className="absolute inset-0 flex items-center"
     >
       <div className="max-w-2xl px-6 md:px-16 lg:px-24">
-        <p className="font-sans text-caramel text-sm tracking-[0.3em] uppercase mb-4">
+        <p className="font-sans text-caramel text-xs sm:text-sm tracking-[0.3em] uppercase mb-3 sm:mb-4">
           0{index + 1} — {service.eyebrow}
         </p>
-        <h3 className="font-serif text-4xl md:text-5xl lg:text-6xl text-warm-white leading-tight mb-6">
+        <h3 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-warm-white leading-tight mb-4 sm:mb-6">
           {service.title}
         </h3>
-        <p className="font-sans text-cream/85 text-lg leading-relaxed mb-8">
+        <p className="font-sans text-cream/85 text-base sm:text-lg leading-relaxed mb-6 sm:mb-8">
           {service.desc}
         </p>
-        <ul className="space-y-3">
+        <ul className="space-y-2.5 sm:space-y-3">
           {service.bullets.map((b, i) => (
-            <li key={i} className="flex items-center gap-3 text-cream/90 font-sans">
+            <li key={i} className="flex items-center gap-3 text-sm sm:text-base text-cream/90 font-sans">
               <span className="flex-shrink-0 w-6 h-6 rounded-full bg-caramel/20 text-caramel flex items-center justify-center text-sm">
                 ✓
               </span>
@@ -228,8 +228,8 @@ Tempat & Layanan Kami
           ))}
         </div>
 
-        {/* Indikator progres */}
-        <div className="absolute right-5 md:right-8 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-4">
+        {/* Indikator progres — disembunyikan di mobile agar tak menimpa teks panel */}
+        <div className="absolute right-5 md:right-8 top-1/2 -translate-y-1/2 z-20 hidden sm:flex flex-col gap-4">
           {services.map((_, i) => (
             <ProgressDot key={`dot-${i}`} index={i} total={total} progress={progress} />
           ))}

@@ -14,6 +14,12 @@ function formatRupiah(n) {
 // Harus sama dengan DELIVERY_FEE di backend (sumber kebenaran tetap server)
 const DELIVERY_FEE = 10000
 
+// ── Validasi nomor WhatsApp ──────────────────────────────────────────────────
+// Wajib diawali +62 atau 0, sisanya hanya angka (8–13 digit). Selain itu invalid.
+const PHONE_RE = /^(\+62|0)[0-9]{8,13}$/
+// Saring input saat diketik: hanya izinkan angka & satu '+' di paling depan.
+const normalizePhone = (v) => v.replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '')
+
 // Konfigurasi Midtrans Snap (client)
 const MIDTRANS_IS_PROD = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true'
 const SNAP_SRC = MIDTRANS_IS_PROD
@@ -48,6 +54,9 @@ export default function CheckoutPage() {
   const isDelivery  = form.fulfillment_type === 'delivery'
   const deliveryFee = isDelivery ? DELIVERY_FEE : 0
   const grandTotal  = total + deliveryFee
+  // Nomor dianggap invalid hanya bila sudah diisi tapi formatnya salah (jangan
+  // tampilkan error saat field masih kosong).
+  const phoneInvalid = form.customer_phone.length > 0 && !PHONE_RE.test(form.customer_phone)
 
   const setField = (name, value) => setForm(p => ({ ...p, [name]: value }))
 
@@ -102,7 +111,10 @@ export default function CheckoutPage() {
     }
 
     if (!form.customer_name.trim())  return toast.error('Nama wajib diisi')
-    if (!form.customer_phone.trim()) return toast.error('Nomor telepon wajib diisi')
+    if (!form.customer_phone.trim()) return toast.error('Nomor WhatsApp wajib diisi')
+    if (!PHONE_RE.test(form.customer_phone)) {
+      return toast.error('Nomor WhatsApp harus diawali +62 atau 0 dan hanya berisi angka')
+    }
     if (isDelivery && !form.delivery_address.trim()) {
       return toast.error('Alamat pengantaran wajib diisi untuk delivery')
     }
@@ -220,22 +232,22 @@ export default function CheckoutPage() {
 
   // ── Form ─────────────────────────────────────────────────────────────────────
   return (
-    <div className="pt-24 pb-20 px-6 min-h-screen bg-warm-white">
+    <div className="pt-24 pb-20 px-4 sm:px-6 min-h-screen bg-warm-white">
       {/* Script popup pembayaran Midtrans Snap */}
       {MIDTRANS_CLIENT_KEY && (
         <Script src={SNAP_SRC} data-client-key={MIDTRANS_CLIENT_KEY} strategy="afterInteractive" />
       )}
 
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <p className="text-latte text-sm font-sans mb-1">
             <Link href="/menu" className="hover:text-coffee">← Kembali ke Menu</Link>
           </p>
-          <h1 className="font-serif text-4xl text-espresso">Checkout</h1>
+          <h1 className="font-serif text-3xl sm:text-4xl text-espresso">Checkout</h1>
           <p className="text-latte font-sans text-sm mt-1">Pemesanan online — diantar atau ambil sendiri di toko.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
           {/* Kolom kiri: form */}
           <div className="lg:col-span-3 space-y-5">
             {/* Metode pengantaran */}
@@ -269,19 +281,26 @@ export default function CheckoutPage() {
               <h2 className="font-serif text-xl text-espresso mb-5">Informasi Kontak</h2>
               <div className="mb-4">
                 <label className="block text-sm font-semibold text-coffee mb-1.5">Nama Lengkap *</label>
-                <input type="text" value={form.customer_name}
+                <input type="text" autoComplete="name" value={form.customer_name}
                   onChange={e => setField('customer_name', e.target.value)}
                   placeholder="Nama Anda" required className={inputClass} />
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-semibold text-coffee mb-1.5">Nomor WhatsApp *</label>
-                <input type="tel" value={form.customer_phone}
-                  onChange={e => setField('customer_phone', e.target.value)}
-                  placeholder="08xx-xxxx-xxxx" required className={inputClass} />
+                <input type="tel" inputMode="tel" autoComplete="tel" value={form.customer_phone}
+                  onChange={e => setField('customer_phone', normalizePhone(e.target.value))}
+                  placeholder="08xxxxxxxxxx atau +62xxxxxxxxxx" required
+                  aria-invalid={phoneInvalid}
+                  className={`${inputClass} ${phoneInvalid ? '!border-red-400 focus:!border-red-400 focus:!ring-red-200' : ''}`} />
+                {phoneInvalid && (
+                  <p className="text-xs text-red-500 mt-1.5 font-sans">
+                    Nomor harus diawali <strong>+62</strong> atau <strong>0</strong> dan hanya berisi angka.
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-coffee mb-1.5">Email (opsional)</label>
-                <input type="email" value={form.customer_email}
+                <input type="email" inputMode="email" autoComplete="email" value={form.customer_email}
                   onChange={e => setField('customer_email', e.target.value)}
                   placeholder="email@contoh.com" className={inputClass} />
               </div>
