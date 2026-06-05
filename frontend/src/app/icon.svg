@@ -1,0 +1,17 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Latar kotak membulat warna espresso (brand) agar ikon tetap jelas di tab terang/gelap -->
+  <rect width="64" height="64" rx="14" fill="#2C1810"/>
+  <!-- Cangkir monoline — SAMA dengan komponen Logo di header (paths viewBox 40x40),
+       digeser 12px agar punya padding di dalam ikon. Warna caramel brand. -->
+  <g transform="translate(12 12)" stroke="#D4A056" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- uap -->
+    <path d="M16 6c-1.3 1.6-1.3 3.2 0 4.8" opacity="0.65"/>
+    <path d="M22 5c-1.4 1.8-1.4 3.6 0 5.4" opacity="0.65"/>
+    <!-- badan cangkir -->
+    <path d="M9 15h18v6.5a9 9 0 0 1-18 0z"/>
+    <!-- gagang -->
+    <path d="M27 17h3.2a3.8 3.8 0 0 1 0 7.6H27"/>
+    <!-- alas -->
+    <path d="M6.5 33h21"/>
+  </g>
+</svg>
