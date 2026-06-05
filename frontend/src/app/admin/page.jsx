@@ -1,8 +1,10 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { isAdminAuthed } from '@/lib/admin-auth'
 import { getSupabase } from '@/lib/supabase'
 import Logo from '@/components/Logo'
 import LogoutButton from './LogoutButton'
+import OrderStatusSelect from './OrderStatusSelect'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Dashboard — Kopi Nusantara', robots: { index: false, follow: false } }
@@ -20,6 +22,26 @@ const PAY_META = {
   unpaid:  { label: 'Belum (COD)', cls: 'bg-cream text-coffee' },
   failed:  { label: 'Gagal',       cls: 'bg-red-100 text-red-600' },
   expired: { label: 'Kedaluwarsa', cls: 'bg-red-50 text-red-500' },
+}
+
+// ── Filter rentang waktu ──────────────────────────────────────────────────────
+const RANGES = [
+  { key: 'today', label: 'Hari ini' },
+  { key: '7d',    label: '7 hari' },
+  { key: '30d',   label: '30 hari' },
+  { key: 'all',   label: 'Semua' },
+]
+function cutoffFor(range) {
+  const now = Date.now()
+  if (range === '7d')  return new Date(now - 7 * 86400000)
+  if (range === '30d') return new Date(now - 30 * 86400000)
+  if (range === 'today') {
+    // Tengah malam WIB (UTC+7).
+    const wib = new Date(now + 7 * 3600000)
+    wib.setUTCHours(0, 0, 0, 0)
+    return new Date(wib.getTime() - 7 * 3600000)
+  }
+  return null // 'all' → tanpa batas
 }
 
 function PayBadge({ status }) {
@@ -40,7 +62,6 @@ function StatCard({ label, value, sub }) {
 function Shell({ children }) {
   return (
     <div className="min-h-screen bg-parchment">
-      {/* Header bar */}
       <header className="bg-espresso">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -58,9 +79,29 @@ function Shell({ children }) {
   )
 }
 
-export default async function AdminDashboardPage() {
-  // Gerbang auth — wajib sesi valid.
+function RangeFilter({ active }) {
+  return (
+    <div className="flex flex-wrap gap-2 mb-6">
+      {RANGES.map(r => (
+        <Link
+          key={r.key}
+          href={r.key === 'all' ? '/admin' : `/admin?range=${r.key}`}
+          className={`text-sm font-semibold px-4 py-2 rounded-xl transition-colors ${
+            active === r.key ? 'bg-coffee text-warm-white shadow-warm-sm' : 'bg-white text-coffee border border-beige hover:border-coffee'
+          }`}
+        >
+          {r.label}
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+export default async function AdminDashboardPage({ searchParams }) {
   if (!isAdminAuthed()) redirect('/admin/login')
+
+  const range = RANGES.some(r => r.key === searchParams?.range) ? searchParams.range : 'all'
+  const cutoff = cutoffFor(range)
 
   const supabase = getSupabase()
   if (!supabase) {
@@ -74,14 +115,17 @@ export default async function AdminDashboardPage() {
     )
   }
 
-  const { data: orders, error } = await supabase
+  let query = supabase
     .from('orders')
     .select('*, order_items(*)')
     .order('created_at', { ascending: false })
+  if (cutoff) query = query.gte('created_at', cutoff.toISOString())
+  const { data: orders, error } = await query
 
   if (error) {
     return (
       <Shell>
+        <RangeFilter active={range} />
         <div className="bg-white rounded-2xl shadow-warm-sm p-8 text-center">
           <p className="font-serif text-xl text-espresso mb-2">Gagal memuat data</p>
           <p className="text-sm text-latte">Coba muat ulang halaman.</p>
@@ -92,7 +136,7 @@ export default async function AdminDashboardPage() {
 
   const list = orders || []
 
-  // ── Statistik ──────────────────────────────────────────────────────────────
+  // ── Statistik (mengikuti filter rentang) ─────────────────────────────────────
   const paid = list.filter(o => o.payment_status === 'paid')
   const revenue = paid.reduce((s, o) => s + (o.total_amount || 0), 0)
   const payCounts = list.reduce((acc, o) => {
@@ -100,13 +144,12 @@ export default async function AdminDashboardPage() {
     return acc
   }, {})
 
-  // Agregasi pelanggan (kunci: nomor telepon).
   const custMap = new Map()
   for (const o of list) {
     const key = o.customer_phone || o.customer_name || `#${o.id}`
     const c = custMap.get(key) || {
       name: o.customer_name, phone: o.customer_phone, email: o.customer_email,
-      orders: 0, spent: 0, last: o.created_at,
+      orders: 0, spent: 0,
     }
     c.orders += 1
     if (o.payment_status === 'paid') c.spent += o.total_amount || 0
@@ -117,12 +160,16 @@ export default async function AdminDashboardPage() {
   const itemsSummary = (o) =>
     (o.order_items || []).map(i => `${i.product_name} ×${i.quantity}`).join(', ') || '—'
 
+  const rangeLabel = RANGES.find(r => r.key === range)?.label?.toLowerCase()
+
   return (
     <Shell>
+      <RangeFilter active={range} />
+
       {/* Kartu statistik */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
         <StatCard label="Total Pendapatan" value={formatRupiah(revenue)} sub={`dari ${paid.length} pesanan lunas`} />
-        <StatCard label="Total Pesanan" value={list.length} />
+        <StatCard label="Total Pesanan" value={list.length} sub={range !== 'all' ? rangeLabel : undefined} />
         <StatCard label="Pelanggan Unik" value={customers.length} />
         <StatCard label="Menunggu Bayar" value={payCounts.pending || 0} sub="status pending" />
       </div>
@@ -144,7 +191,7 @@ export default async function AdminDashboardPage() {
       <section className="mb-8">
         <h2 className="font-serif text-lg text-espresso mb-3">Pesanan ({list.length})</h2>
         <div className="bg-white rounded-2xl shadow-warm-sm overflow-x-auto">
-          <table className="w-full text-sm min-w-[760px]">
+          <table className="w-full text-sm min-w-[880px]">
             <thead>
               <tr className="text-left text-latte border-b border-cream">
                 <th className="px-4 py-3 font-semibold">Tanggal</th>
@@ -153,11 +200,12 @@ export default async function AdminDashboardPage() {
                 <th className="px-4 py-3 font-semibold">Metode</th>
                 <th className="px-4 py-3 font-semibold text-right">Total</th>
                 <th className="px-4 py-3 font-semibold">Bayar</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
               </tr>
             </thead>
             <tbody>
               {list.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-latte">Belum ada pesanan.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-latte">Belum ada pesanan pada rentang ini.</td></tr>
               ) : list.map(o => (
                 <tr key={o.id} className="border-b border-cream/60 last:border-0 align-top">
                   <td className="px-4 py-3 text-coffee whitespace-nowrap">{formatDate(o.created_at)}</td>
@@ -171,6 +219,7 @@ export default async function AdminDashboardPage() {
                   </td>
                   <td className="px-4 py-3 text-right font-semibold text-espresso whitespace-nowrap">{formatRupiah(o.total_amount)}</td>
                   <td className="px-4 py-3"><PayBadge status={o.payment_status} /></td>
+                  <td className="px-4 py-3"><OrderStatusSelect id={o.id} current={o.status} /></td>
                 </tr>
               ))}
             </tbody>
