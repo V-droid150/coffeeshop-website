@@ -1,6 +1,7 @@
 'use client'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useCart } from '@/context/CartContext'
 
 function formatRupiah(n) {
@@ -9,6 +10,10 @@ function formatRupiah(n) {
 
 export default function CartDrawer() {
   const { items, isOpen, setIsOpen, removeItem, updateQty, total, itemCount } = useCart()
+  const pathname = usePathname()
+
+  // Keranjang tidak relevan di area dashboard admin.
+  if (pathname?.startsWith('/admin')) return null
 
   return (
     <AnimatePresence>
