@@ -23,7 +23,7 @@ export default function MenuPage({ searchParams }) {
   return (
     <div className="pt-24 pb-20 min-h-screen bg-warm-white">
       {/* Header — background foto kopi & pastry tertata di meja */}
-      <div className="relative py-20 px-6 text-center mb-12 overflow-hidden">
+      <div className="relative py-16 sm:py-20 px-6 text-center mb-8 sm:mb-12 overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1920&q=80")' }} />
         <div className="absolute inset-0 bg-gradient-to-r from-espresso/90 to-coffee/85" />
@@ -36,7 +36,7 @@ export default function MenuPage({ searchParams }) {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Filter tab kategori (Client Component untuk interaktivitas) */}
         <MenuFilter categories={categories} active={activeCategory} />
 
@@ -54,7 +54,7 @@ export default function MenuPage({ searchParams }) {
             <p className="text-sm text-latte font-sans mb-6">
               Menampilkan <strong className="text-coffee">{products.length}</strong> produk
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {products.map(p => <ProductCard key={p.id} product={p} />)}
             </div>
           </>

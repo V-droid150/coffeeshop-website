@@ -92,7 +92,8 @@ export default function CartDrawer() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => updateQty(item.id, item.quantity - 1)}
-                            className="w-7 h-7 rounded-lg bg-cream hover:bg-beige flex items-center justify-center text-coffee font-bold text-sm transition-colors"
+                            className="w-8 h-8 rounded-lg bg-cream hover:bg-beige active:scale-95 flex items-center justify-center text-coffee font-bold text-base transition-all"
+                            aria-label="Kurangi jumlah"
                           >
                             −
                           </button>
@@ -101,7 +102,8 @@ export default function CartDrawer() {
                           </span>
                           <button
                             onClick={() => updateQty(item.id, item.quantity + 1)}
-                            className="w-7 h-7 rounded-lg bg-cream hover:bg-beige flex items-center justify-center text-coffee font-bold text-sm transition-colors"
+                            className="w-8 h-8 rounded-lg bg-cream hover:bg-beige active:scale-95 flex items-center justify-center text-coffee font-bold text-base transition-all"
+                            aria-label="Tambah jumlah"
                           >
                             +
                           </button>

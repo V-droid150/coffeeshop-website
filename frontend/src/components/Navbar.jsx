@@ -32,7 +32,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-2.5">
           <Logo className={`w-8 h-8 transition-colors duration-300 ${scrolled ? 'text-coffee' : 'text-warm-white'}`} />
           <div>
-            <span className={`font-serif font-bold text-xl transition-colors duration-300 ${scrolled ? 'text-espresso' : 'text-warm-white'}`}>Kopi Nusantara</span>
+            <span className={`font-serif font-bold text-lg sm:text-xl transition-colors duration-300 ${scrolled ? 'text-espresso' : 'text-warm-white'}`}>Kopi Nusantara</span>
             <span className={`block text-[10px] font-sans tracking-widest uppercase -mt-0.5 transition-colors duration-300 ${scrolled ? 'text-latte' : 'text-cream/80'}`}>
               Est. 2024
             </span>

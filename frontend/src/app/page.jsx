@@ -26,25 +26,25 @@ function Hero() {
         <p className="font-sans text-latte text-sm tracking-[0.3em] uppercase mb-4 animate-fade-up">
           Kopi Spesialti Indonesia
         </p>
-        <h1 className="font-serif text-5xl md:text-7xl text-warm-white leading-tight mb-6 animate-fade-up"
+        <h1 className="font-serif text-4xl sm:text-5xl md:text-7xl text-warm-white leading-tight mb-6 animate-fade-up"
           style={{ animationDelay: '0.1s' }}>
           Temukan Ketenangan
           <br />
           <span className="text-caramel italic">di Setiap Seduhan</span>
         </h1>
-        <p className="font-sans text-cream/80 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-up"
+        <p className="font-sans text-cream/80 text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed animate-fade-up"
           style={{ animationDelay: '0.2s' }}>
           Kami memilih biji kopi terbaik dari pegunungan Nusantara, diseduh dengan teknik manual brewing
           oleh barista berpengalaman — untuk satu cangkir yang sempurna, setiap hari.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up"
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center animate-fade-up"
           style={{ animationDelay: '0.3s' }}>
           <Link href="/menu"
-            className="bg-caramel hover:bg-latte text-espresso font-bold px-8 py-4 rounded-2xl shadow-warm-lg transition-all duration-200 text-lg">
+            className="bg-caramel hover:bg-latte text-espresso font-bold px-8 py-3.5 sm:py-4 rounded-2xl shadow-warm-lg transition-all duration-200 text-base sm:text-lg">
             Lihat Menu Lengkap →
           </Link>
           <Link href="#layanan"
-            className="border-2 border-cream/50 text-cream hover:bg-cream/10 font-semibold px-8 py-4 rounded-2xl transition-all duration-200 text-lg">
+            className="border-2 border-cream/50 text-cream hover:bg-cream/10 font-semibold px-8 py-3.5 sm:py-4 rounded-2xl transition-all duration-200 text-base sm:text-lg">
             Tempat & Layanan
           </Link>
         </div>
