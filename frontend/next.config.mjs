@@ -22,8 +22,8 @@ const csp = [
   "img-src 'self' data: blob: https://images.unsplash.com https://*.midtrans.com",
   // fonts.gstatic.com = file .woff2 dari Google Fonts.
   "font-src 'self' data: https://fonts.gstatic.com",
-  // Supabase dipanggil dari server, tapi diizinkan juga bila suatu saat dari browser.
-  "connect-src 'self' https://*.midtrans.com https://*.supabase.co",
+  // Supabase dipanggil dari server; Web3Forms dipanggil dari browser (form kontak).
+  "connect-src 'self' https://*.midtrans.com https://*.supabase.co https://api.web3forms.com",
   // Popup pembayaran Midtrans berupa iframe.
   "frame-src https://app.sandbox.midtrans.com https://app.midtrans.com https://*.midtrans.com",
   "object-src 'none'",

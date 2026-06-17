@@ -9,8 +9,8 @@ import Logo from '@/components/Logo'
 const navLinks = [
   { href: '/',         label: 'Beranda' },
   { href: '/menu',     label: 'Menu'    },
-  { href: '/#about',   label: 'Tentang' },
-  { href: '/#contact', label: 'Kontak'  },
+  { href: '/about',    label: 'About'      },
+  { href: '/contact',  label: 'Contact Us' },
 ]
 
 export default function Navbar() {
@@ -28,17 +28,21 @@ export default function Navbar() {
   // Sembunyikan navbar storefront di area dashboard admin.
   if (pathname?.startsWith('/admin')) return null
 
+  // Halaman tanpa hero gelap (mis. /contact) → navbar selalu "solid" agar teks
+  // tetap terbaca di latar terang, walau belum di-scroll.
+  const solid = scrolled || pathname === '/contact'
+
   return (
     <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-      scrolled ? 'bg-warm-white/95 backdrop-blur-md shadow-warm' : 'bg-transparent'
+      solid ? 'bg-warm-white/95 backdrop-blur-md shadow-warm' : 'bg-transparent'
     }`}>
       <div className="max-w-7xl mx-auto pl-6 pr-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
-          <Logo className={`w-8 h-8 transition-colors duration-300 ${scrolled ? 'text-coffee' : 'text-warm-white'}`} />
+          <Logo className={`w-8 h-8 transition-colors duration-300 ${solid ? 'text-coffee' : 'text-warm-white'}`} />
           <div>
-            <span className={`font-serif font-bold text-lg sm:text-xl transition-colors duration-300 ${scrolled ? 'text-espresso' : 'text-warm-white'}`}>Kopi Nusantara</span>
-            <span className={`block text-[10px] font-sans tracking-widest uppercase -mt-0.5 transition-colors duration-300 ${scrolled ? 'text-latte' : 'text-cream/80'}`}>
+            <span className={`font-serif font-bold text-lg sm:text-xl transition-colors duration-300 ${solid ? 'text-espresso' : 'text-warm-white'}`}>Kopi Nusantara</span>
+            <span className={`block text-[10px] font-sans tracking-widest uppercase -mt-0.5 transition-colors duration-300 ${solid ? 'text-latte' : 'text-cream/80'}`}>
               Est. 2024
             </span>
           </div>
@@ -50,7 +54,7 @@ export default function Navbar() {
             <Link
               key={l.href}
               href={l.href}
-              className={`font-sans font-medium transition-colors duration-200 relative group ${scrolled ? 'text-coffee hover:text-espresso' : 'text-cream hover:text-white'}`}
+              className={`font-sans font-medium transition-colors duration-200 relative group ${solid ? 'text-coffee hover:text-espresso' : 'text-cream hover:text-white'}`}
             >
               {l.label}
               <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-caramel group-hover:w-full transition-all duration-300 rounded-full" />
@@ -87,9 +91,9 @@ export default function Navbar() {
             aria-label="Menu"
           >
             <div className="flex flex-col gap-1.5 w-5">
-              <span className={`h-0.5 rounded transition-all ${scrolled ? 'bg-coffee' : 'bg-warm-white'} ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
-              <span className={`h-0.5 rounded transition-all ${scrolled ? 'bg-coffee' : 'bg-warm-white'} ${mobileOpen ? 'opacity-0' : ''}`} />
-              <span className={`h-0.5 rounded transition-all ${scrolled ? 'bg-coffee' : 'bg-warm-white'} ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+              <span className={`h-0.5 rounded transition-all ${solid ? 'bg-coffee' : 'bg-warm-white'} ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
+              <span className={`h-0.5 rounded transition-all ${solid ? 'bg-coffee' : 'bg-warm-white'} ${mobileOpen ? 'opacity-0' : ''}`} />
+              <span className={`h-0.5 rounded transition-all ${solid ? 'bg-coffee' : 'bg-warm-white'} ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`} />
             </div>
           </button>
         </div>
