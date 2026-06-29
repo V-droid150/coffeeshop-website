@@ -31,10 +31,13 @@ export async function PATCH(request, { params }) {
   const supabase = getSupabase()
   if (!supabase) return NextResponse.json({ success: false, error: 'Database belum terhubung' }, { status: 503 })
 
-  const { error } = await supabase.from('products').update(record).eq('id', id)
+  const { data, error } = await supabase.from('products').update(record).eq('id', id).select('id')
   if (error) {
     console.error('[admin] update product error:', error.message)
     return NextResponse.json({ success: false, error: 'Gagal memperbarui produk' }, { status: 500 })
+  }
+  if (!data || data.length === 0) {
+    return NextResponse.json({ success: false, error: 'Produk tidak ditemukan' }, { status: 404 })
   }
   return NextResponse.json({ success: true })
 }
@@ -51,10 +54,13 @@ export async function DELETE(request, { params }) {
   const supabase = getSupabase()
   if (!supabase) return NextResponse.json({ success: false, error: 'Database belum terhubung' }, { status: 503 })
 
-  const { error } = await supabase.from('products').delete().eq('id', id)
+  const { data, error } = await supabase.from('products').delete().eq('id', id).select('id')
   if (error) {
     console.error('[admin] delete product error:', error.message)
     return NextResponse.json({ success: false, error: 'Gagal menghapus produk' }, { status: 500 })
+  }
+  if (!data || data.length === 0) {
+    return NextResponse.json({ success: false, error: 'Produk tidak ditemukan' }, { status: 404 })
   }
   return NextResponse.json({ success: true })
 }

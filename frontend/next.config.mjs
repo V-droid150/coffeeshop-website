@@ -18,6 +18,9 @@ const csp = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.sandbox.midtrans.com https://app.midtrans.com https://*.midtrans.com",
   // 'unsafe-inline' utk style framer-motion/Tailwind; fonts.googleapis.com utk CSS Google Fonts.
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  // img-src: hanya origin sendiri + Unsplash + Midtrans. Bila admin memakai gambar
+  // produk dari CDN lain (mis. Cloudinary/S3), TAMBAHKAN domain spesifiknya di sini —
+  // JANGAN pakai 'https:' umum karena melemahkan proteksi CSP.
   // blob: dipakai sebagian library utk render gambar; Unsplash = gambar menu.
   "img-src 'self' data: blob: https://images.unsplash.com https://*.midtrans.com",
   // fonts.gstatic.com = file .woff2 dari Google Fonts.

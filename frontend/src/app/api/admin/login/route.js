@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { ADMIN_COOKIE, SESSION_MAX_AGE, cookieOptions, getAdminToken, safeEqual } from '@/lib/admin-auth'
+import { ADMIN_COOKIE, SESSION_MAX_AGE, cookieOptions, getAdminToken, safeEqual, createSession } from '@/lib/admin-auth'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -37,6 +37,6 @@ export async function POST(request) {
   }
 
   const res = NextResponse.json({ success: true })
-  res.cookies.set(ADMIN_COOKIE, token, { ...cookieOptions, maxAge: SESSION_MAX_AGE })
+  res.cookies.set(ADMIN_COOKIE, createSession(), { ...cookieOptions, maxAge: SESSION_MAX_AGE })
   return res
 }

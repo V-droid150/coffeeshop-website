@@ -35,6 +35,11 @@ export async function POST(request) {
 
   const { order_id, transaction_status, fraud_status } = status
 
+  if (!order_id) {
+    console.error('[webhook] order_id kosong dari Midtrans, skip update')
+    return NextResponse.json({ ok: true })
+  }
+
   let payment_status = 'pending'
   if (transaction_status === 'capture') {
     payment_status = fraud_status === 'accept' ? 'paid' : 'pending'
@@ -50,9 +55,15 @@ export async function POST(request) {
 
   const supabase = getSupabase()
   if (supabase) {
+    const updatePayload = { payment_status }
+    // Bila pembayaran gagal/kedaluwarsa, batalkan juga status fulfillment
+    // agar tidak nyangkut 'pending' di dashboard admin.
+    if (payment_status === 'failed' || payment_status === 'expired') {
+      updatePayload.status = 'cancelled'
+    }
     const { error } = await supabase
       .from('orders')
-      .update({ payment_status })
+      .update(updatePayload)
       .eq('midtrans_order_id', order_id)
     if (error) console.error('[webhook] update gagal:', error.message)
   }

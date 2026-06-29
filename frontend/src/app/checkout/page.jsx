@@ -388,6 +388,7 @@ export default function CheckoutPage() {
                   <span className="font-sans font-semibold text-coffee">Total</span>
                   <span className="font-serif font-bold text-2xl text-espresso">{formatRupiah(grandTotal)}</span>
                 </div>
+                <p className="text-xs text-latte mt-1">Harga final dikonfirmasi server saat checkout.</p>
               </div>
 
               <button type="submit" disabled={loading}

@@ -86,6 +86,9 @@ export async function POST(request) {
     if (!p) {
       return NextResponse.json({ success: false, error: `Produk id ${item.product_id} tidak ditemukan` }, { status: 400 })
     }
+    if (p.is_available === false) {
+      return NextResponse.json({ success: false, error: `Produk "${p.name}" sedang tidak tersedia` }, { status: 400 })
+    }
     // Quantity wajib bilangan bulat positif & wajar — cegah total negatif/NaN & order sampah.
     if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99) {
       return NextResponse.json({ success: false, error: `Jumlah untuk "${p.name}" tidak valid (harus 1–99)` }, { status: 400 })
